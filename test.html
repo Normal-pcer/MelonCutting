@@ -1,0 +1,13 @@
+<iframe src="test.txt" frameborder="0" height="0" width="0" id="abc"></iframe>
+
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+    axios
+        .get('./test.txt')
+        .then(function (response) {
+            console.log(response);
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+</script>
