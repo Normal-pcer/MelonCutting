@@ -1,13 +1,9 @@
-<iframe src="test.txt" frameborder="0" height="0" width="0" id="abc"></iframe>
-
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<iframe src="./tests.txt" frameborder="0" id="114"></iframe>
 <script>
-    axios
-        .get('./test.txt')
-        .then(function (response) {
-            console.log(response);
-        })
-        .catch(function (error) {
-            console.log(error);
-        });
+    window.onload = function () {
+        var a = document.getElementsByTagName('iframe')[0];
+        var b = a.contentWindow.document.querySelector('pre');
+        b = b.innerHTML;
+        console.log(b);
+    };
 </script>
