@@ -1,9 +1,11 @@
-<iframe src="./tests.txt" frameborder="0" id="114"></iframe>
+<div id="opt">Loading</div>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>
-    window.onload = function () {
-        var a = document.getElementsByTagName('iframe')[0];
-        var b = a.contentWindow.document.querySelector('pre');
-        b = b.innerHTML;
-        console.log(b);
-    };
+    axios
+        .get(
+            'https://raw.githubusercontent.com/Normal-pcer/MelonCutting/develop/tests.txt'
+        )
+        .then(function (res) {
+            document.getElementById('opt').innerText = res.data;
+        });
 </script>
