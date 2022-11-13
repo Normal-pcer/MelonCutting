@@ -5,7 +5,10 @@
         <title></title>
         <link rel="stylesheet" href="./resource/style.css" />
     </head>
-    <body style="height: 3000px">
+    <body>
+        <div id="background" style="position: fixed">
+            <img src="" alt="" style="opacity: 25%" />
+        </div>
         <div id="game">
             <div id="ready"></div>
         </div>
@@ -182,6 +185,9 @@
             const 谱面难度 = 解码(网址参数['level']);
             const 谱面位移 = 0; // 单位：毫秒
 
+            const 浏览器宽度 = window.innerWidth;
+            const 浏览器高度 = window.innerHeight;
+
             // 游戏变量定义
             var 毫秒计时 = 0;
             var 节拍计时 = new 带分数(0);
@@ -205,9 +211,23 @@
                 removeEventListener('click', 游戏中);
                 // Flag: 谱面延迟稍后处理
                 节拍计时起始时间戳 = 时间戳();
+                document.getElementById('ready').innerHTML = '';
             }
             window.onload = function () {
+                /* 调整大小 */
+                let 主体元素 = document.getElementsByTagName('body')[0];
+                主体元素.style.width = 浏览器宽度;
+                主体元素.style.height = 浏览器高度;
                 /* Flag: 解析待会写 */
+                let 谱面文件内容 = JSON.parse(获取谱面());
+                let 瓜_ = 谱面文件内容['notes']
+                for (let i=0; i<瓜_.length; i++) {
+                    
+                }
+                /* 曲绘 */
+                let 曲绘图片元素 =
+                    document.getElementById('background').children[0];
+                曲绘图片元素.src = 'image/' + 解码(网址参数['illu']);
                 /* 提醒用户点击屏幕
                 原因：浏览器不允许在无操作的情况下自动播放音频
                 */
