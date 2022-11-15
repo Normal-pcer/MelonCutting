@@ -2,8 +2,15 @@
     "info": {},
     "judgelines": [
         {
-            "notes": [],
-            "events": []
+            "notes": [{ "type": "tap", "time": [1, 0, 1], "x": 0 }],
+            "events": [
+                {
+                    "type": "move",
+                    "time": [1, 0, 1],
+                    "last": [0, 0, 1],
+                    "to": [0, 100]
+                }
+            ]
         }
     ]
 }

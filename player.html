@@ -70,6 +70,7 @@
                 constructor(种类 = 瓜的种类.西瓜, 判定时间 = new 带分数(0)) {
                     this.种类 = 种类;
                     this.判定时间 = 判定时间;
+                    this.相对位置 = 0;
                 }
             }
             class 事件 {
@@ -220,9 +221,12 @@
                 主体元素.style.height = 浏览器高度;
                 /* Flag: 解析待会写 */
                 let 谱面文件内容 = JSON.parse(获取谱面());
-                let 瓜_ = 谱面文件内容['notes']
-                for (let i=0; i<瓜_.length; i++) {
-                    
+                var 判定线列表 = new Array();
+                let 判线列 = 谱面文件内容['judgelines'];
+                for (let i = 0; i < 判线列.length; i++) {
+                    let 正在遍历 = 判线列[i];
+                    判定线列表.push(new 判定线());
+                    let 已经写入 = 判定线列表[判定线列表.length - 1];
                 }
                 /* 曲绘 */
                 let 曲绘图片元素 =
