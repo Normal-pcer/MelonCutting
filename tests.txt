@@ -1,0 +1,33 @@
+传参形式：
+
+https://example.com/player.html?datatype=value1&chart=value2&illu=value3&name=value4&music=value5&level=value6&ca=value7&ia=value8
+
+type: 传参类型，可为：lib, url
+当type=lib时 chart, illu, music为编码后的仓库中的文件名
+当type=url时 chart, illu, music为编码后的URL链接
+name：谱面名
+level：谱面难度
+ca: 谱面作者
+ia：曲绘作者
+例如：播放仓库中的“你好”
+
+谱面文件：你好_in.json -encodeURI-> %E4%BD%A0%E5%A5%BD_in.json
+-btoa-> JUU0JUJEJUEwJUU1JUE1JUJEX2luLmpzb24=
+
+
+曲绘：你好.jpg -encodeURI-> %E4%BD%A0%E5%A5%BD.jpg -btoa->
+JUU0JUJEJUEwJUU1JUE1JUJELmpwZw==
+
+
+音乐位置：你好.mp3 -encodeURI-> %E4%BD%A0%E5%A5%BD.mp3 -btoa->
+JUU0JUJEJUEwJUU1JUE1JUJELm1wMw==
+
+
+等级：IN Lv.13 -encodeURI-> IN%20Lv.13 -btoa-> SU4lMjBMdi4xMw==
+
+
+谱面名、谱面作者、曲绘作者：你好 -encodeURI-> %E4%BD%A0%E5%A5%BD
+-btoa-> JUU0JUJEJUEwJUU1JUE1JUJE
+
+
+得到：https://example.com/player.html?datatype=lib&chart=JUU0JUJEJUEwJUU1JUE1JUJEX2luLmpzb24=&illu=JUU0JUJEJUEwJUU1JUE1JUJELmpwZw&name=JUU0JUJEJUEwJUU1JUE1JUJE&music=JUU0JUJEJUEwJUU1JUE1JUJELm1wMw&level=SU4lMjBMdi4xMw&ca=JUU0JUJEJUEwJUU1JUE1JUJE&ia=JUU0JUJEJUEwJUU1JUE1JUJE

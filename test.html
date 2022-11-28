@@ -1,13 +1,11 @@
-<iframe src="test.txt" frameborder="0" height="0" width="0" id="abc"></iframe>
-
+<div id="opt">Loading</div>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>
     axios
-        .get('./test.txt')
-        .then(function (response) {
-            console.log(response);
-        })
-        .catch(function (error) {
-            console.log(error);
+        .get(
+            'https://raw.githubusercontent.com/Normal-pcer/MelonCutting/develop/tests.txt'
+        )
+        .then(function (res) {
+            document.getElementById('opt').innerText = res.data;
         });
 </script>

@@ -3,8 +3,23 @@
     <head>
         <meta charset="UTF-8" />
         <title></title>
+        <link rel="stylesheet" href="./resource/style.css" />
     </head>
-    <body style="height: 3000px">
+    <body>
+        <div id="background" style="position: fixed">
+            <img src="" alt="" style="opacity: 25%" />
+        </div>
+        <div id="game">
+            <div id="ready"></div>
+        </div>
+        <iframe
+            src="./none.txt"
+            frameborder="0"
+            id="readChart"
+            width="0"
+            height="0"
+        ></iframe>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
         <script>
             // 类定义
             const 瓜的种类 = new (class {
@@ -14,12 +29,12 @@
             })();
             const 事件的种类 = new (class {
                 缺省 = 'default';
-                移动 = 'move';
+                切向移动 = 'moveX';
+                径向移动 = 'moveY';
                 旋转 = 'rotate';
                 透明度 = 'transparent';
                 速度 = 'speed';
             })();
-
             class 带分数 {
                 constructor(整数部分 = 0, 分子 = 0, 分母 = 1) {
                     this.整数部分 = 整数部分;
@@ -47,8 +62,10 @@
                     新分子 = 新分子 % 分母的最小公倍数;
                     return new 带分数(整数, 新分子, 分母的最小公倍数);
                 }
+                parseFloat = () => {
+                    return this.整数部分 + this.分子 / this.分母;
+                };
             }
-
             class 瓜 {
                 /* 瓜：
                     瓜在《瓜了个瓜》中充当传统音游中Note的角色，即当瓜下落到判定线上时，玩家需做出正确的动作，即：
@@ -57,6 +74,7 @@
                 constructor(种类 = 瓜的种类.西瓜, 判定时间 = new 带分数(0)) {
                     this.种类 = 种类;
                     this.判定时间 = 判定时间;
+                    this.相对位置 = 0;
                 }
             }
             class 事件 {
@@ -64,12 +82,14 @@
                     类型 = 事件的种类.缺省,
                     发生时间 = new 带分数(0),
                     持续时间 = new 带分数(0),
+                    起点数值 = 0,
                     终点数值 = 0
                 ) {
                     this.类型 = 类型;
                     this.发生时间 = 发生时间;
                     this.持续时间 = 持续时间;
-                    this.终点数值 = this.终点数值;
+                    this.终点数值 = 终点数值;
+                    this.起点数值 = 起点数值;
                 }
             }
             class 判定线 {
@@ -90,8 +110,55 @@
                     this.事件列表.push(事件的对象);
                 }
             }
+            var 判定线列表 = new Array();
 
             // 游戏常量定义
+            /* 解析网址参数 */
+            const 网址参数 = (function () {
+                let 请求的网址 = window.location.search.substring(1);
+                let 所有键值对 = 请求的网址.split('&');
+                let 结果 = {};
+                for (let i = 0; i < 所有键值对.length; i++) {
+                    let 键值对 = 所有键值对[i].split('=');
+                    if (键值对[0] != '') {
+                        结果[键值对[0]] = 键值对[1];
+                    }
+                }
+                return 结果;
+            })(); // 类似于PHP中的$_GET
+            const 解码 = (s) => decodeURI(atob(s));
+            const 数据类型 = 网址参数['datatype'];
+            var 音频地址 = '',
+                曲绘地址 = '',
+                获取谱面 = '';
+
+            if (数据类型 == 'lib') {
+                // 在本仓库中获取
+                音频地址 = './audio/' + 解码(网址参数['music']);
+                曲绘地址 = './image/' + 解码(网址参数['illu']);
+                document.getElementsByTagName('iframe')[0].src =
+                    'chart/' + 解码(网址参数['chart']);
+                获取谱面 = () =>
+                    document
+                        .getElementsByTagName('iframe')[0]
+                        .contentWindow.document.querySelector('pre').innerHTML;
+            } else {
+                // 读取外部链接
+                音频地址 = 解码(网址参数['music']);
+                曲绘地址 = 解码(网址参数['illu']);
+
+                获取谱面 = () => {
+                    axios
+                        .get(解码(网址参数['chart']))
+                        .then((res) => {
+                            return res.data;
+                        })
+                        .catch((err) =>
+                            alert('加载谱面出现错误, 详细信息：' + err)
+                        );
+                };
+            }
+            const music = new Audio(音频地址);
 
             /* 世界坐标和屏幕坐标：
                 为了便于在不同设备间进行统一，在游戏中采用“世界坐标”描述位置。
@@ -114,29 +181,104 @@
                 y = ((y - 屏幕高度) * 世标高度 * -2) / 屏幕高度 - 世标高度;
                 return [x, y];
             };
-
-            const 网址参数 = function () {
-                let 请求的网址 = window.location.search.substring(1);
-                let 所有键值对 = 请求的网址.split('&');
-                let 结果 = {};
-                for (let i = 0; i < 所有键值对.length; i++) {
-                    let 键值对 = 所有键值对[i].split('=');
-                    if (键值对[0] != '') {
-                        结果[键值对[0]] = 键值对[1];
-                    }
-                }
-                return 结果;
-            }();  // 类似于PHP中的$_GET
-
             /* 流速：
                 游戏中瓜的下落速度被称为流速。一个瓜的流速等于基础流速×判定线流速倍率，单位为"世界坐标/节拍"
             */
+            const 基础流速 = 100;
+            /* 谱面信息 */
+            const 音乐BPM = 120;
+            const 曲绘作者 = 解码(网址参数['ia']);
+            const 谱面作者 = 解码(网址参数['ca']);
+            const 谱面名称 = 解码(网址参数['name']);
+            const 谱面难度 = 解码(网址参数['level']);
+            const 谱面位移 = 0; // 单位：毫秒
+
+            const 浏览器宽度 = window.innerWidth;
+            const 浏览器高度 = window.innerHeight;
 
             // 游戏变量定义
+            var 毫秒计时 = 0;
+            var 节拍计时 = new 带分数(0);
+            var 节拍计时起始时间戳 = 0;
+            var 您数 = 0;
+            var 好数 = 0;
+            var 坏数 = 0;
+            var 小姐数 = 0;
+            var 连击数 = 0;
 
             // 与游戏底层相关的函数
+            const 时间戳 = function () {
+                let dt = new Date();
+                return dt.getTime();
+            };
 
             // 与游戏逻辑相关的函数
+
+            // 游戏流程
+            function 游戏中() {
+                removeEventListener('click', 游戏中);
+                // Flag: 谱面延迟稍后处理
+                节拍计时起始时间戳 = 时间戳();
+                document.getElementById('ready').innerHTML = '';
+            }
+            window.onload = function () {
+                /* 调整大小 */
+                let 主体元素 = document.getElementsByTagName('body')[0];
+                主体元素.style.width = 浏览器宽度;
+                主体元素.style.height = 浏览器高度;
+                /* Flag: 解析待会写 */
+                let 谱面文件内容 = JSON.parse(获取谱面());
+                let 判线列 = 谱面文件内容['judgelines'];
+                for (let i = 0; i < 判线列.length; i++) {
+                    let 当前判定线 = 判线列[i];
+                    判定线列表.push(new 判定线());
+                    let 已经写入 = 判定线列表[判定线列表.length - 1];
+                    let 当前音符列 = new Array();
+                    let 音符对象列 = new Array();
+                    let 事件对象列 = new Array();
+                    let 当前事件列 = new Array();
+                    当前音符列 = 当前判定线['notes'];
+                    当前事件列 = 当前判定线['events'];
+                    for (let j = 0; j < 当前音符列.length; j++) {
+                        let 当前音符 = 当前音符列[j];
+                        let 时 = 当前音符['time'];
+                        let 当前音符对象 = new 瓜(
+                            当前音符['type'],
+                            new 带分数(时[0], 时[1], 时[2])
+                        );
+                        音符对象列.push(当前音符对象);
+                    }
+                    for (let j = 0; j < 当前事件列.length; j++) {
+                        let 当前事件 = 当前事件列[j];
+                        let 类 = 当前事件['type'];
+                        let 时 = 当前事件['time'];
+                        let 持 = 当前事件['last'];
+                        let 始 = 当前事件['from'];
+                        let 至 = 当前事件['to'];
+                        let 当前事件对象 = new 事件(类, 时, 持, 始, 至);
+                        事件对象列.push(当前事件对象);
+                    }
+                    已经写入.事件列表 = 事件对象列;
+                    已经写入.瓜列表 = 音符对象列;
+                }
+                /* 曲绘 */
+                let 曲绘图片元素 =
+                    document.getElementById('background').children[0];
+                曲绘图片元素.src = 'image/' + 解码(网址参数['illu']);
+                /* 提醒用户点击屏幕
+                原因：浏览器不允许在无操作的情况下自动播放音频
+                */
+                let 显示的文字 =
+                    '<div id="ready"><h1>%NAME%</h1><h3>Illustration designed by' +
+                    ' %ILLUSTRATION%</h3><h3>Chart designed by %CHART%</h3>' +
+                    '<hr><h1>点击屏幕以开始游戏</h1></div>';
+                显示的文字 = 显示的文字
+                    .replace('%NAME%', 谱面名称)
+                    .replace('%ILLUSTRATION%', 曲绘作者)
+                    .replace('%CHART%', 谱面作者);
+                document.getElementById('ready').innerHTML = 显示的文字;
+                addEventListener('click', 游戏中);
+            };
         </script>
     </body>
 </html>
