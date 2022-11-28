@@ -29,7 +29,8 @@
             })();
             const 事件的种类 = new (class {
                 缺省 = 'default';
-                移动 = 'move';
+                切向移动 = 'moveX';
+                径向移动 = 'moveY';
                 旋转 = 'rotate';
                 透明度 = 'transparent';
                 速度 = 'speed';
@@ -61,6 +62,9 @@
                     新分子 = 新分子 % 分母的最小公倍数;
                     return new 带分数(整数, 新分子, 分母的最小公倍数);
                 }
+                parseFloat = () => {
+                    return this.整数部分 + this.分子 / this.分母;
+                };
             }
             class 瓜 {
                 /* 瓜：
@@ -78,12 +82,14 @@
                     类型 = 事件的种类.缺省,
                     发生时间 = new 带分数(0),
                     持续时间 = new 带分数(0),
+                    起点数值 = 0,
                     终点数值 = 0
                 ) {
                     this.类型 = 类型;
                     this.发生时间 = 发生时间;
                     this.持续时间 = 持续时间;
-                    this.终点数值 = this.终点数值;
+                    this.终点数值 = 终点数值;
+                    this.起点数值 = 起点数值;
                 }
             }
             class 判定线 {
@@ -104,6 +110,7 @@
                     this.事件列表.push(事件的对象);
                 }
             }
+            var 判定线列表 = new Array();
 
             // 游戏常量定义
             /* 解析网址参数 */
@@ -221,12 +228,38 @@
                 主体元素.style.height = 浏览器高度;
                 /* Flag: 解析待会写 */
                 let 谱面文件内容 = JSON.parse(获取谱面());
-                var 判定线列表 = new Array();
                 let 判线列 = 谱面文件内容['judgelines'];
                 for (let i = 0; i < 判线列.length; i++) {
-                    let 正在遍历 = 判线列[i];
+                    let 当前判定线 = 判线列[i];
                     判定线列表.push(new 判定线());
                     let 已经写入 = 判定线列表[判定线列表.length - 1];
+                    let 当前音符列 = new Array();
+                    let 音符对象列 = new Array();
+                    let 事件对象列 = new Array();
+                    let 当前事件列 = new Array();
+                    当前音符列 = 当前判定线['notes'];
+                    当前事件列 = 当前判定线['events'];
+                    for (let j = 0; j < 当前音符列.length; j++) {
+                        let 当前音符 = 当前音符列[j];
+                        let 时 = 当前音符['time'];
+                        let 当前音符对象 = new 瓜(
+                            当前音符['type'],
+                            new 带分数(时[0], 时[1], 时[2])
+                        );
+                        音符对象列.push(当前音符对象);
+                    }
+                    for (let j = 0; j < 当前事件列.length; j++) {
+                        let 当前事件 = 当前事件列[j];
+                        let 类 = 当前事件['type'];
+                        let 时 = 当前事件['time'];
+                        let 持 = 当前事件['last'];
+                        let 始 = 当前事件['from'];
+                        let 至 = 当前事件['to'];
+                        let 当前事件对象 = new 事件(类, 时, 持, 始, 至);
+                        事件对象列.push(当前事件对象);
+                    }
+                    已经写入.事件列表 = 事件对象列;
+                    已经写入.瓜列表 = 音符对象列;
                 }
                 /* 曲绘 */
                 let 曲绘图片元素 =
