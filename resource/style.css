@@ -12,3 +12,10 @@ body {
     width: 50%;
     height: 50%;
 }
+#judgelines div {
+    position: absolute;
+    top: 600px;
+    border-top: 3px solid #dfe4ea;
+    height: 20px;
+    width: 100%;
+}

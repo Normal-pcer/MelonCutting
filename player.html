@@ -12,6 +12,7 @@
         <div id="game">
             <div id="ready"></div>
             <div id="notes"></div>
+            <div id="judgelines"></div>
         </div>
         <iframe
             src="./none.txt"
@@ -236,6 +237,23 @@
                 for (let i = 0; i < 判定线列表.length; i++) {
                     let 当前判定线 = 判定线列表[i];
                     let 流速 = 当前判定线.流速倍率 * 基础流速;
+                    // 展示判定线
+                    let 判定线ID = 'judgeline_' + i;
+                    let 判定线HTML对象 = document.getElementById(判定线ID);
+                    if (判定线HTML对象) {
+                        判定线HTML对象.style.top =
+                            世转屏(0, 当前判定线.y坐标)[1] + 'px';
+                    } else {
+                        判定线HTML对象 = document.createElement('div');
+                        判定线HTML对象.style.top =
+                            世转屏(0, 当前判定线.y坐标)[1] + 'px';
+                        判定线HTML对象.id = 判定线ID;
+                        document
+                            .getElementById('judgelines')
+                            .appendChild(判定线HTML对象);
+                    }
+
+                    // 展示音符
                     for (let j = 0; j < 当前判定线.瓜列表.length; j++) {
                         let 当前音符 = 当前判定线.瓜列表[j];
                         if (当前音符 === undefined) continue;
