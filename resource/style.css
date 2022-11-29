@@ -5,3 +5,10 @@ body {
     color: #fff;
     text-align: center;
 }
+#notes div {
+    position: absolute;
+}
+#notes div img {
+    width: 50%;
+    height: 50%;
+}

@@ -11,6 +11,7 @@
         </div>
         <div id="game">
             <div id="ready"></div>
+            <div id="notes"></div>
         </div>
         <iframe
             src="./none.txt"
@@ -62,7 +63,7 @@
                     新分子 = 新分子 % 分母的最小公倍数;
                     return new 带分数(整数, 新分子, 分母的最小公倍数);
                 }
-                parseFloat = () => {
+                转为小数 = () => {
                     return this.整数部分 + this.分子 / this.分母;
                 };
             }
@@ -71,10 +72,14 @@
                     瓜在《瓜了个瓜》中充当传统音游中Note的角色，即当瓜下落到判定线上时，玩家需做出正确的动作，即：
                     西瓜(Tap)：尽可能准确地点击；黄瓜(Flick)：手指在其上滑动；南瓜(Drag)：接住即可。
                 */
-                constructor(种类 = 瓜的种类.西瓜, 判定时间 = new 带分数(0)) {
+                constructor(
+                    种类 = 瓜的种类.西瓜,
+                    判定时间 = new 带分数(0),
+                    相对位置 = 0
+                ) {
                     this.种类 = 种类;
                     this.判定时间 = 判定时间;
-                    this.相对位置 = 0;
+                    this.相对位置 = 相对位置;
                 }
             }
             class 事件 {
@@ -196,6 +201,16 @@
             const 浏览器宽度 = window.innerWidth;
             const 浏览器高度 = window.innerHeight;
 
+            const 图片宽度 = 120;
+            const 图片高度 = 120;
+
+            const 节拍转毫秒 = (拍) => {
+                return (拍.转为小数() / 音乐BPM) * 60000;
+            };
+            const 毫秒转节拍 = (毫秒) => {
+                return (毫秒 / 60000) * 音乐BPM;
+            };
+
             // 游戏变量定义
             var 毫秒计时 = 0;
             var 节拍计时 = new 带分数(0);
@@ -215,18 +230,70 @@
             // 与游戏逻辑相关的函数
 
             // 游戏流程
+            function 帧() {
+                毫秒计时 = 时间戳();
+                let 已经过 = 毫秒计时 - 节拍计时起始时间戳;
+                for (let i = 0; i < 判定线列表.length; i++) {
+                    let 当前判定线 = 判定线列表[i];
+                    let 流速 = 当前判定线.流速倍率 * 基础流速;
+                    for (let j = 0; j < 当前判定线.瓜列表.length; j++) {
+                        let 当前音符 = 当前判定线.瓜列表[j];
+                        if (当前音符 === undefined) continue;
+                        let 音符纵向位移 =
+                            (世转屏(
+                                0,
+                                节拍转毫秒(当前音符.判定时间) - 已经过
+                            )[1] *
+                                流速) /
+                                1000 -
+                            图片高度 / 2;
+                        let 音符横向位移 =
+                            世转屏(当前音符.相对位置, 0)[0] - 图片宽度 / 2;
+                        if (音符纵向位移 < 0) continue;
+                        let 音符ID = 'note_' + i + '_' + j;
+                        if (音符纵向位移 > 屏幕高度 - 图片高度) {
+                            delete 当前判定线.瓜列表[j];
+                            let 音符HTML容器 = document.getElementById(音符ID);
+                            let 音符HTML对象 = 音符HTML容器.children[0];
+                            音符HTML容器.removeChild(音符HTML对象);
+                            音符HTML容器.remove();
+                            continue;
+                        }
+                        let 音符HTML对象 = document.getElementById(音符ID);
+                        if (音符HTML对象) {
+                            // 修改原有对象属性
+                            音符HTML对象.style.top = 音符纵向位移 + 'px';
+                            音符HTML对象.style.left = 音符横向位移 + 'px';
+                        } else {
+                            // 创建对象
+                            音符HTML对象 = document.createElement('img');
+                            let 音符HTML容器 = document.createElement('div');
+                            音符HTML对象.src =
+                                './resource/' + 当前音符.种类 + '.png';
+                            音符HTML容器.style.top = 音符纵向位移 + 'px';
+                            音符HTML容器.style.left = 音符横向位移 + 'px';
+                            音符HTML容器.id = 音符ID;
+                            音符HTML容器.appendChild(音符HTML对象);
+                            document
+                                .getElementById('notes')
+                                .appendChild(音符HTML容器);
+                        }
+                    }
+                }
+            }
             function 游戏中() {
                 removeEventListener('click', 游戏中);
                 // Flag: 谱面延迟稍后处理
                 节拍计时起始时间戳 = 时间戳();
                 document.getElementById('ready').innerHTML = '';
+
+                setInterval(帧, 1);
             }
             window.onload = function () {
                 /* 调整大小 */
                 let 主体元素 = document.getElementsByTagName('body')[0];
                 主体元素.style.width = 浏览器宽度;
                 主体元素.style.height = 浏览器高度;
-                /* Flag: 解析待会写 */
                 let 谱面文件内容 = JSON.parse(获取谱面());
                 let 判线列 = 谱面文件内容['judgelines'];
                 for (let i = 0; i < 判线列.length; i++) {
@@ -244,7 +311,8 @@
                         let 时 = 当前音符['time'];
                         let 当前音符对象 = new 瓜(
                             当前音符['type'],
-                            new 带分数(时[0], 时[1], 时[2])
+                            new 带分数(时[0], 时[1], 时[2]),
+                            当前音符['x']
                         );
                         音符对象列.push(当前音符对象);
                     }
@@ -255,7 +323,13 @@
                         let 持 = 当前事件['last'];
                         let 始 = 当前事件['from'];
                         let 至 = 当前事件['to'];
-                        let 当前事件对象 = new 事件(类, 时, 持, 始, 至);
+                        let 当前事件对象 = new 事件(
+                            类,
+                            new 带分数(时[0], 时[1], 时[2]),
+                            new 带分数(持[0], 持[1], 持[2]),
+                            始,
+                            至
+                        );
                         事件对象列.push(当前事件对象);
                     }
                     已经写入.事件列表 = 事件对象列;
