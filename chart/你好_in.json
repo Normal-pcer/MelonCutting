@@ -3,9 +3,9 @@
     "judgelines": [
         {
             "notes": [
-                { "type": "tap", "time": [1, 0, 1], "x": 0 },
-                { "type": "drag", "time": [1, 0, 1], "x": 300 },
-                { "type": "flick", "time": [2, 1, 2], "x": -100 }
+                { "type": "tap", "time": [9, 0, 1], "x": 0 },
+                { "type": "drag", "time": [11, 0, 1], "x": 300 },
+                { "type": "flick", "time": [12, 1, 2], "x": -100 }
             ],
             "events": [
                 {
