@@ -24,3 +24,10 @@ body {
     text-align: right;
     font-size: 1.5em;
 }
+#showCombo {
+    color: #dfe4ea;
+    text-align: center;
+}
+#comboNum {
+    font-size: 1.5em;
+}

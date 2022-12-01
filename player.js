@@ -216,7 +216,7 @@ const 时间戳 = function () {
 /**
  * @returns {string}
  */
-function 计算分数() {
+function 计算分数和连击数() {
     let 分数 = 0;
     let ACC = 0;
     let ACC_100percent = 100 / 物量;
@@ -229,6 +229,8 @@ function 计算分数() {
         let 本次判定 = 判定记录[i];
         if (abs(本次判定) <= 160) {
             连击++;
+        } else {
+            连击 = 0;
         }
         最大连击 = Math.max(连击, 最大连击);
 
@@ -252,7 +254,7 @@ function 计算分数() {
 
     分数 += (最大连击 / 物量) * 50000;
     分数 = Math.round(分数);
-    return '0'.repeat(7 - 分数.toString().length) + 分数;
+    return ['0'.repeat(7 - 分数.toString().length) + 分数, 连击];
 }
 
 /**
@@ -305,7 +307,6 @@ function 单击(事件对象) {
 // 游戏流程
 function 帧() {
     毫秒计时 = 时间戳();
-    let 已经过 = 毫秒计时 - 节拍计时起始时间戳;
     for (let i = 0; i < 判定线列表.length; i++) {
         let 当前判定线 = 判定线列表[i];
         let 流速 = 当前判定线.流速倍率 * 基础流速;
@@ -363,16 +364,24 @@ function 帧() {
                 音符HTML容器.appendChild(音符HTML对象);
                 document.getElementById('notes').appendChild(音符HTML容器);
             }
+            if (
+                节拍转毫秒(当前音符.判定时间) - 毫秒计时 + 节拍计时起始时间戳 <
+                -160
+            ) {
+                判定记录.push(-200);
+            }
         }
     }
-    let 分数 = 计算分数();
-    document.getElementById('scoreNum').innerHTML = 分数;
+    let 分数和连击数 = 计算分数和连击数();
+    document.getElementById('scoreNum').innerHTML = 分数和连击数[0];
+    document.getElementById('comboNum').innerHTML = 分数和连击数[1];
 }
 function 游戏中() {
     removeEventListener('click', 游戏中);
     // Flag: 谱面延迟稍后处理
     节拍计时起始时间戳 = 时间戳();
     document.getElementById('ready').innerHTML = '';
+    document.getElementById('comboText').innerHTML = 'COMBO';
 
     addEventListener('click', 单击, false);
 
