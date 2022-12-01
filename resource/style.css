@@ -19,3 +19,8 @@ body {
     height: 20px;
     width: 100%;
 }
+#showScore {
+    color: #dfe4ea;
+    text-align: right;
+    font-size: 1.5em;
+}
