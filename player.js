@@ -182,6 +182,8 @@ const 谱面名称 = 解码(网址参数['name']);
 const 谱面难度 = 解码(网址参数['level']);
 const 谱面位移 = 0; // 单位：毫秒
 
+var 物量 = 0;
+
 const 浏览器宽度 = window.innerWidth;
 const 浏览器高度 = window.innerHeight;
 
@@ -211,6 +213,50 @@ const 时间戳 = function () {
 };
 
 // 与游戏逻辑相关的函数
+/**
+ * @returns {string}
+ */
+function 计算分数和连击数() {
+    let 分数 = 0;
+    let ACC = 0;
+    let ACC_100percent = 100 / 物量;
+    let 判定分_100percent = 950000 / 物量;
+    let 连击 = 0;
+    let 最大连击 = 0;
+    let abs = Math.abs;
+
+    for (let i = 0; i < 判定记录.length; i++) {
+        let 本次判定 = 判定记录[i];
+        if (abs(本次判定) <= 160) {
+            连击++;
+        } else {
+            连击 = 0;
+        }
+        最大连击 = Math.max(连击, 最大连击);
+
+        if (abs(本次判定) <= 25) {
+            // Pure Perfect
+            ACC += 1.25 * ACC_100percent;
+            分数 += 1 * 判定分_100percent;
+        } else if (abs(本次判定) <= 60) {
+            // Normal Perfect
+            ACC += 1 * ACC_100percent;
+            分数 += 1 * 判定分_100percent;
+        } else if (abs(本次判定) <= 160) {
+            let 临 = (0.4 * (160 - abs(本次判定)) + 40) / 100;
+            ACC += 临 * ACC_100percent;
+            分数 += 临 * 判定分_100percent;
+        } else if (abs(本次判定) <= 180) {
+            ACC += 0;
+            分数 += 0.025 * 判定分_100percent;
+        }
+    }
+
+    分数 += (最大连击 / 物量) * 50000;
+    分数 = Math.round(分数);
+    return ['0'.repeat(7 - 分数.toString().length) + 分数, 连击];
+}
+
 /**
  * 在鼠标单击时执行。作为addEventListener()的回调函数。
  * @param {PointerEvent} 事件对象
@@ -261,7 +307,6 @@ function 单击(事件对象) {
 // 游戏流程
 function 帧() {
     毫秒计时 = 时间戳();
-    let 已经过 = 毫秒计时 - 节拍计时起始时间戳;
     for (let i = 0; i < 判定线列表.length; i++) {
         let 当前判定线 = 判定线列表[i];
         let 流速 = 当前判定线.流速倍率 * 基础流速;
@@ -319,14 +364,24 @@ function 帧() {
                 音符HTML容器.appendChild(音符HTML对象);
                 document.getElementById('notes').appendChild(音符HTML容器);
             }
+            if (
+                节拍转毫秒(当前音符.判定时间) - 毫秒计时 + 节拍计时起始时间戳 <
+                -160
+            ) {
+                判定记录.push(-200);
+            }
         }
     }
+    let 分数和连击数 = 计算分数和连击数();
+    document.getElementById('scoreNum').innerHTML = 分数和连击数[0];
+    document.getElementById('comboNum').innerHTML = 分数和连击数[1];
 }
 function 游戏中() {
     removeEventListener('click', 游戏中);
     // Flag: 谱面延迟稍后处理
     节拍计时起始时间戳 = 时间戳();
     document.getElementById('ready').innerHTML = '';
+    document.getElementById('comboText').innerHTML = 'COMBO';
 
     addEventListener('click', 单击, false);
 
@@ -358,6 +413,7 @@ window.onload = function () {
                 当前音符['x']
             );
             音符对象列.push(当前音符对象);
+            物量++;
         }
         for (let j = 0; j < 当前事件列.length; j++) {
             let 当前事件 = 当前事件列[j];
