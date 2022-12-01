@@ -175,7 +175,7 @@ const 屏转世 = function (x, y) {
             */
 const 基础流速 = 100;
 /* 谱面信息 */
-const 音乐BPM = 120;
+var 音乐BPM = 120;
 const 曲绘作者 = 解码(网址参数['ia']);
 const 谱面作者 = 解码(网址参数['ca']);
 const 谱面名称 = 解码(网址参数['name']);
@@ -385,6 +385,7 @@ function 游戏中() {
 
     addEventListener('click', 单击, false);
 
+    music.play();
     setInterval(帧, 1);
 }
 window.onload = function () {
@@ -393,6 +394,7 @@ window.onload = function () {
     主体元素.style.width = 浏览器宽度;
     主体元素.style.height = 浏览器高度;
     let 谱面文件内容 = JSON.parse(获取谱面());
+    音乐BPM = 谱面文件内容['info']['BPM'];
     let 判线列 = 谱面文件内容['judgelines'];
     for (let i = 0; i < 判线列.length; i++) {
         let 当前判定线 = 判线列[i];
