@@ -340,12 +340,17 @@ function 帧() {
             let 音符横向位移 = 世转屏(当前音符.相对位置, 0)[0] - 图片宽度 / 2;
             if (音符纵向位移 < 0) continue;
             let 音符ID = 'note_' + i + '_' + j;
-            if (音符纵向位移 > 屏幕高度 - 图片高度) {
+            if (
+                音符纵向位移 > 屏幕高度 - 图片高度 ||
+                节拍转毫秒(当前音符.判定时间) - 毫秒计时 + 节拍计时起始时间戳 <
+                    -160
+            ) {
                 delete 当前判定线.瓜列表[j];
                 let 音符HTML容器 = document.getElementById(音符ID);
                 let 音符HTML对象 = 音符HTML容器.children[0];
                 音符HTML容器.removeChild(音符HTML对象);
                 音符HTML容器.remove();
+                判定记录.push(-200);
                 continue;
             }
             let 音符HTML对象 = document.getElementById(音符ID);
@@ -363,12 +368,6 @@ function 帧() {
                 音符HTML容器.id = 音符ID;
                 音符HTML容器.appendChild(音符HTML对象);
                 document.getElementById('notes').appendChild(音符HTML容器);
-            }
-            if (
-                节拍转毫秒(当前音符.判定时间) - 毫秒计时 + 节拍计时起始时间戳 <
-                -160
-            ) {
-                判定记录.push(-200);
             }
         }
     }
@@ -439,6 +438,9 @@ window.onload = function () {
     /* 曲绘 */
     let 曲绘图片元素 = document.getElementById('background').children[0];
     曲绘图片元素.src = 'image/' + 解码(网址参数['illu']);
+    /* 显示歌名和等级 */
+    document.getElementById('nameText').innerHTML = 谱面名称;
+    document.getElementById('levelText').innerHTML = 解码(网址参数['level']);
     /* 提醒用户点击屏幕
                 原因：浏览器不允许在无操作的情况下自动播放音频
                 */

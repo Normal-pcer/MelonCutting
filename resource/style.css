@@ -1,8 +1,9 @@
 body {
     background-color: #2c3e50;
+    color: #dfe4ea;
 }
 #ready {
-    color: #fff;
+    color: #dfe4ea;
     text-align: center;
 }
 #notes div {
@@ -20,14 +21,25 @@ body {
     width: 100%;
 }
 #showScore {
-    color: #dfe4ea;
     text-align: right;
     font-size: 1.5em;
 }
 #showCombo {
-    color: #dfe4ea;
     text-align: center;
 }
 #comboNum {
     font-size: 1.5em;
+}
+#showName {
+    bottom: 0.5em;
+    position: absolute;
+}
+#showLevel {
+    bottom: 0.5em;
+    right: 8em;
+    position: absolute;
+}
+#buttom {
+    position: absolute;
+    bottom: 0;
 }
