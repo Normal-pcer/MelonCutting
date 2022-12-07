@@ -83,7 +83,7 @@ class 判定线 {
         this.x坐标 = 0;
         this.y坐标 = 0;
         this.角度 = 0;
-        this.透明度 = 0;
+        this.透明度 = 1;
         this.流速倍率 = 1;
     }
     生成瓜(瓜的对象 = new 瓜()) {
@@ -201,7 +201,7 @@ const 毫秒转节拍 = (毫秒) => {
 // 游戏变量定义
 var 毫秒计时 = 0;
 var 节拍计时 = new 带分数(0);
-var 节拍计时起始时间戳 = 0;
+var 计时起始时间戳 = 0;
 /**
  * @type {number[]}
  */
@@ -288,7 +288,7 @@ function 判定西瓜(世界坐标, 单击时时间戳) {
             let 纵向距离 =
                 节拍转毫秒(正在遍历的音符.判定时间) -
                 单击时时间戳 +
-                节拍计时起始时间戳;
+                计时起始时间戳;
             if (横向距离 > 屏幕宽度 / 10) continue;
             if (纵向距离 < -160 || 纵向距离 > 180) continue;
             if (纵向距离 < 最小纵向距离) {
@@ -324,7 +324,7 @@ function 判定黄瓜(世界坐标, 单击时时间戳) {
             let 纵向距离 =
                 节拍转毫秒(正在遍历的音符.判定时间) -
                 单击时时间戳 +
-                节拍计时起始时间戳;
+                计时起始时间戳;
             if (正在遍历的音符.延迟判定) continue;
             if (横向距离 > 屏幕宽度 / 10) continue;
             if (纵向距离 < -160 || 纵向距离 > 180) continue;
@@ -366,7 +366,7 @@ function 判定南瓜(单击时时间戳) {
                 let 纵向距离 =
                     节拍转毫秒(正在遍历的音符.判定时间) -
                     单击时时间戳 +
-                    节拍计时起始时间戳;
+                    计时起始时间戳;
                 if (正在遍历的音符.延迟判定) continue;
                 if (横向距离 > 屏幕宽度 / 10) continue;
                 if (纵向距离 < -160 || 纵向距离 > 180) continue;
@@ -385,8 +385,7 @@ function 延判() {
         let 判定线对象 = 判定线列表[位置[0]];
         let 瓜对象 = 判定线对象.瓜列表[位置[1]];
 
-        let 纵向距离 =
-            节拍转毫秒(瓜对象.判定时间) - 时间戳() + 节拍计时起始时间戳;
+        let 纵向距离 = 节拍转毫秒(瓜对象.判定时间) - 时间戳() + 计时起始时间戳;
 
         if (纵向距离 <= 0) {
             delete 判定线列表[位置[0]].瓜列表[位置[1]];
@@ -434,11 +433,54 @@ function 滑动触摸屏(事件对象) {
 }
 
 // 游戏流程
+function 处理事件(当前判定线, 新的数值, 类型) {
+    switch (类型) {
+        case 事件的种类.沿Y轴移动:
+            当前判定线.y坐标 = 新的数值;
+            break;
+        case 事件的种类.沿X轴移动:
+            当前判定线.x坐标 = 新的数值;
+            break;
+        case 事件的种类.旋转:
+            当前判定线.角度 = 新的数值;
+            break;
+        case 事件的种类.透明度:
+            当前判定线.透明度 = 新的数值;
+            break;
+        case 事件的种类.速度:
+            当前判定线.流速倍率 = 新的数值;
+            break;
+        default:
+    }
+}
 function 帧() {
     毫秒计时 = 时间戳();
     for (let i = 0; i < 判定线列表.length; i++) {
         let 当前判定线 = 判定线列表[i];
         let 流速 = 当前判定线.流速倍率 * 基础流速;
+        // 处理事件
+        for (let j = 0; j < 当前判定线.事件列表.length; j++) {
+            let 当前事件 = 当前判定线['事件列表'][j];
+            if (当前事件 === undefined) continue;
+            if (
+                节拍转毫秒(当前事件.发生时间.plus(当前事件.持续时间)) <=
+                毫秒计时 - 计时起始时间戳
+            ) {
+                处理事件(当前判定线, 当前事件.终点数值, 当前事件.类型);
+                delete 当前判定线['事件列表'][j];
+                continue;
+            } else if (
+                节拍转毫秒(当前事件.发生时间) <=
+                毫秒计时 - 计时起始时间戳
+            ) {
+                let 事件已持续时间 = 毫秒计时 - 计时起始时间戳 - 发生时间;
+                let 新的数值 =
+                    (事件已持续时间 / 当前事件.持续时间) *
+                        (当前事件.终点数值 - 当前事件.起点数值) +
+                    当前事件.起点数值;
+                处理事件(当前事件, 新的数值, 当前事件.类型);
+            }
+        }
         // 展示判定线
         let 判定线ID = 'judgeline_' + i;
         let 判定线HTML对象 = document.getElementById(判定线ID);
@@ -450,7 +492,8 @@ function 帧() {
             判定线HTML对象.id = 判定线ID;
             document.getElementById('judgelines').appendChild(判定线HTML对象);
         }
-
+        判定线HTML对象.style.borderTopColor =
+            'rgba(255, 255, 255, ' + 当前判定线.透明度 + ')';
         // 展示音符
         for (let j = 0; j < 当前判定线.瓜列表.length; j++) {
             let 当前音符 = 当前判定线.瓜列表[j];
@@ -458,21 +501,29 @@ function 帧() {
             let 音符纵向位移 = (function () {
                 let 每毫秒流速 = 流速 / 节拍转毫秒(new 带分数(1, 0, 1));
                 let 相差毫秒数 =
-                    节拍转毫秒(当前音符.判定时间) -
-                    毫秒计时 +
-                    节拍计时起始时间戳;
+                    节拍转毫秒(当前音符.判定时间) - 毫秒计时 + 计时起始时间戳;
                 let 音符纵向世界坐标 =
                     相差毫秒数 * 每毫秒流速 + 当前判定线.y坐标;
                 let 音符纵向屏幕坐标 = 世转屏(0, 音符纵向世界坐标)[1];
                 return 音符纵向屏幕坐标 - 图片宽度 / 2;
             })();
             let 音符横向位移 = 世转屏(当前音符.相对位置, 0)[0] - 图片宽度 / 2;
-            if (音符纵向位移 < 0) continue;
             let 音符ID = 'note_' + i + '_' + j;
+            let 音符HTML对象 = document.getElementById(音符ID);
+            if (音符纵向位移 < 0) {
+                if (音符HTML对象) {
+                    let 音符HTML容器 = document.getElementById(音符ID);
+                    let 音符HTML对象 = 音符HTML容器.children[0];
+                    音符HTML容器.removeChild(音符HTML对象);
+                    音符HTML容器.remove();
+                    continue;
+                } else {
+                    continue;
+                }
+            }
             if (
                 音符纵向位移 > 屏幕高度 - 图片高度 ||
-                节拍转毫秒(当前音符.判定时间) - 毫秒计时 + 节拍计时起始时间戳 <
-                    -160
+                节拍转毫秒(当前音符.判定时间) - 毫秒计时 + 计时起始时间戳 < -160
             ) {
                 delete 当前判定线.瓜列表[j];
                 let 音符HTML容器 = document.getElementById(音符ID);
@@ -482,7 +533,6 @@ function 帧() {
                 判定记录.push(-200);
                 continue;
             }
-            let 音符HTML对象 = document.getElementById(音符ID);
             if (音符HTML对象) {
                 // 修改原有对象属性
                 音符HTML对象.style.top = 音符纵向位移 + 'px';
@@ -509,7 +559,7 @@ function 帧() {
 function 游戏中() {
     removeEventListener('click', 游戏中);
     // Flag: 谱面延迟稍后处理
-    节拍计时起始时间戳 = 时间戳();
+    计时起始时间戳 = 时间戳();
     document.getElementById('ready').innerHTML = '';
     document.getElementById('comboText').innerHTML = 'COMBO';
 
