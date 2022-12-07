@@ -5,11 +5,11 @@
     "judgelines": [
         {
             "notes": [
-                { "type": "tap", "time": [9, 0, 1], "x": 0 },
-                { "type": "tap", "time": [11, 0, 1], "x": 0 },
-                { "type": "tap", "time": [13, 0, 1], "x": 0 },
-                { "type": "tap", "time": [15, 0, 1], "x": 0 },
-                { "type": "tap", "time": [17, 0, 1], "x": 0 },
+                { "type": "tap", "time": [0, 1, 2], "x": -300 },
+                { "type": "tap", "time": [1, 0, 1], "x": 0 },
+                { "type": "tap", "time": [1, 1, 2], "x": 0 },
+                { "type": "tap", "time": [2, 0, 1], "x": 300 },
+                { "type": "tap", "time": [2, 0, 1], "x": -300 },
                 { "type": "tap", "time": [19, 0, 1], "x": 0 },
                 { "type": "tap", "time": [21, 0, 1], "x": 0 },
                 { "type": "tap", "time": [23, 0, 1], "x": 0 },

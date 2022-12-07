@@ -6,8 +6,8 @@ const 瓜的种类 = new (class {
 })();
 const 事件的种类 = new (class {
     缺省 = 'default';
-    切向移动 = 'moveX';
-    径向移动 = 'moveY';
+    沿X轴移动 = 'moveX';
+    沿Y轴移动 = 'moveY';
     旋转 = 'rotate';
     透明度 = 'transparent';
     速度 = 'speed';
@@ -51,6 +51,7 @@ class 瓜 {
         this.种类 = 种类;
         this.判定时间 = 判定时间;
         this.相对位置 = 相对位置;
+        this.延迟判定 = false;
     }
 }
 class 事件 {
@@ -257,17 +258,23 @@ function 计算分数和连击数() {
     return ['0'.repeat(7 - 分数.toString().length) + 分数, 连击];
 }
 
+// 点击时判定
 /**
- * 在鼠标单击时执行。作为addEventListener()的回调函数。
- * @param {PointerEvent} 事件对象
+ * @type {TouchList}
  */
-function 单击(事件对象) {
-    let 单击时时间戳 = 时间戳();
-    let 横坐标 = 事件对象.clientX;
-    let 纵坐标 = 事件对象.clientY;
-    let 世界坐标 = 屏转世(横坐标, 纵坐标);
-    世界坐标 = [parseFloat(世界坐标[0]), parseFloat(世界坐标[1])];
+let 触摸点列 = new Array();
+/**
+ * @type {number[][]}
+ */
+let 延迟判定 = new Array();
 
+/**
+ *
+ * @param {number[]} 世界坐标
+ * @param {number} 单击时时间戳
+ * @returns {null}
+ */
+function 判定西瓜(世界坐标, 单击时时间戳) {
     let 最小纵向距离 = 2147483647;
     let 最小横向距离 = 2147483647;
     let 对应的瓜 = [-1, -1];
@@ -276,6 +283,7 @@ function 单击(事件对象) {
         for (let j = 0; j < 正在遍历的判定线.瓜列表.length; j++) {
             let 正在遍历的音符 = 正在遍历的判定线.瓜列表[j];
             if (正在遍历的音符 === undefined) continue;
+            if (正在遍历的音符.种类 != 瓜的种类.西瓜) continue;
             let 横向距离 = Math.abs(正在遍历的音符.相对位置 - 世界坐标[0]);
             let 纵向距离 =
                 节拍转毫秒(正在遍历的音符.判定时间) -
@@ -300,8 +308,129 @@ function 单击(事件对象) {
     );
     音符容器.removeChild(音符容器.children[0]);
     音符容器.remove();
-    console.log(最小纵向距离);
     判定记录.push(最小纵向距离);
+}
+function 判定黄瓜(世界坐标, 单击时时间戳) {
+    let 最小纵向距离 = 2147483647;
+    let 最小横向距离 = 2147483647;
+    let 对应的瓜 = [-1, -1];
+    for (let i = 0; i < 判定线列表.length; i++) {
+        let 正在遍历的判定线 = 判定线列表[i];
+        for (let j = 0; j < 正在遍历的判定线.瓜列表.length; j++) {
+            let 正在遍历的音符 = 正在遍历的判定线.瓜列表[j];
+            if (正在遍历的音符 === undefined) continue;
+            if (正在遍历的音符.种类 != 瓜的种类.黄瓜) continue;
+            let 横向距离 = Math.abs(正在遍历的音符.相对位置 - 世界坐标[0]);
+            let 纵向距离 =
+                节拍转毫秒(正在遍历的音符.判定时间) -
+                单击时时间戳 +
+                节拍计时起始时间戳;
+            if (正在遍历的音符.延迟判定) continue;
+            if (横向距离 > 屏幕宽度 / 10) continue;
+            if (纵向距离 < -160 || 纵向距离 > 180) continue;
+            if (纵向距离 < 最小纵向距离) {
+                最小纵向距离 = 纵向距离;
+                最小横向距离 = 横向距离;
+                对应的瓜 = [i, j];
+            } else if (纵向距离 == 最小纵向距离 && 横向距离 < 最小横向距离) {
+                最小横向距离 = 横向距离;
+                对应的瓜 = [i, j];
+            }
+        }
+    }
+    if (对应的瓜[0] == -1) return;
+    if (最小纵向距离 > 0) {
+        延迟判定.push(对应的瓜);
+        判定线列表[对应的瓜[0]].瓜列表[对应的瓜[1]].延迟判定 = true;
+    } else {
+        delete 判定线列表[对应的瓜[0]].瓜列表[对应的瓜[1]];
+        let 音符容器 = document.getElementById(
+            'note_' + 对应的瓜[0] + '_' + 对应的瓜[1]
+        );
+        音符容器.removeChild(音符容器.children[0]);
+        音符容器.remove();
+    }
+    判定记录.push(0);
+}
+function 判定南瓜(单击时时间戳) {
+    for (let p = 0; p < 触摸点列.length; p++) {
+        let 触摸点 = 触摸点列[p];
+        let 世界坐标 = 屏转世(触摸点['clientX'], 触摸点['clientY']);
+        for (let i = 0; i < 判定线列表.length; i++) {
+            let 正在遍历的判定线 = 判定线列表[i];
+            for (let j = 0; j < 正在遍历的判定线.瓜列表.length; j++) {
+                let 正在遍历的音符 = 正在遍历的判定线.瓜列表[j];
+                if (正在遍历的音符 === undefined) continue;
+                if (正在遍历的音符.种类 != 瓜的种类.南瓜) continue;
+                let 横向距离 = Math.abs(正在遍历的音符.相对位置 - 世界坐标[0]);
+                let 纵向距离 =
+                    节拍转毫秒(正在遍历的音符.判定时间) -
+                    单击时时间戳 +
+                    节拍计时起始时间戳;
+                if (正在遍历的音符.延迟判定) continue;
+                if (横向距离 > 屏幕宽度 / 10) continue;
+                if (纵向距离 < -160 || 纵向距离 > 180) continue;
+                let 对应的瓜 = [i, j];
+                延迟判定.push(对应的瓜);
+                判定线列表[对应的瓜[0]].瓜列表[对应的瓜[1]].延迟判定 = true;
+                判定记录.push(0);
+            }
+        }
+    }
+}
+function 延判() {
+    for (let i = 0; i < 延迟判定.length; i++) {
+        if (延迟判定[i] === undefined) continue;
+        let 位置 = 延迟判定[i];
+        let 判定线对象 = 判定线列表[位置[0]];
+        let 瓜对象 = 判定线对象.瓜列表[位置[1]];
+
+        let 纵向距离 =
+            节拍转毫秒(瓜对象.判定时间) - 时间戳() + 节拍计时起始时间戳;
+
+        if (纵向距离 <= 0) {
+            delete 判定线列表[位置[0]].瓜列表[位置[1]];
+            let 音符容器 = document.getElementById(
+                'note_' + 位置[0] + '_' + 位置[1]
+            );
+            音符容器.removeChild(音符容器.children[0]);
+            音符容器.remove();
+            delete 延迟判定[i];
+        }
+    }
+}
+/**
+ * 在触摸时执行。作为addEventListener()的回调函数。
+ * @param {TouchEvent} 事件对象
+ */
+function 开始触摸(事件对象) {
+    let 触摸点 = 事件对象.changedTouches[0];
+    let 单击时时间戳 = 时间戳();
+    let 横坐标 = 触摸点.clientX;
+    let 纵坐标 = 触摸点.clientY;
+    let 世界坐标 = 屏转世(横坐标, 纵坐标);
+    世界坐标 = [parseFloat(世界坐标[0]), parseFloat(世界坐标[1])];
+
+    判定西瓜(世界坐标, 单击时时间戳);
+    触摸点列 = 事件对象.touches;
+    事件对象.preventDefault();
+}
+
+/**
+ * 在滑动时执行。作为addEventListener()的回调函数。
+ * @param {TouchEvent} 事件对象
+ */
+function 滑动触摸屏(事件对象) {
+    let 触摸点 = 事件对象.changedTouches[0];
+    let 单击时时间戳 = 时间戳();
+    let 横坐标 = 触摸点.clientX;
+    let 纵坐标 = 触摸点.clientY;
+    let 世界坐标 = 屏转世(横坐标, 纵坐标);
+    世界坐标 = [parseFloat(世界坐标[0]), parseFloat(世界坐标[1])];
+
+    判定黄瓜(世界坐标, 单击时时间戳);
+    触摸点列 = 事件对象.touches;
+    事件对象.preventDefault();
 }
 
 // 游戏流程
@@ -371,6 +500,8 @@ function 帧() {
             }
         }
     }
+    判定南瓜(时间戳());
+    延判();
     let 分数和连击数 = 计算分数和连击数();
     document.getElementById('scoreNum').innerHTML = 分数和连击数[0];
     document.getElementById('comboNum').innerHTML = 分数和连击数[1];
@@ -382,7 +513,8 @@ function 游戏中() {
     document.getElementById('ready').innerHTML = '';
     document.getElementById('comboText').innerHTML = 'COMBO';
 
-    addEventListener('click', 单击, false);
+    addEventListener('touchstart', 开始触摸, { passive: false });
+    addEventListener('touchmove', 滑动触摸屏, { passive: false });
 
     music.play();
     setInterval(帧, 1);
